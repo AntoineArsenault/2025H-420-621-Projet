@@ -1,15 +1,47 @@
+/* Styles globaux */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0; /* Fond neutre et moderne */
+    color: #333; /* Texte sombre pour une bonne lisibilité */
+    box-sizing: border-box;
 }
 
-.board {
-    display: grid;
-    grid-template-columns: repeat(8, 50px);
-    grid-template-rows: repeat(8, 50px);
+/* Centrer le titre */
+h1 {
+    font-size: 2.5rem; /* Taille de police du titre */
+    color: #2c3e50; /* Couleur de texte foncé */
+    text-align: center;
+    margin-bottom: 20px; /* Espacement sous le titre */
+    font-weight: bold; /* Texte en gras */
 }
 
-.cell {
-    width: 50px;
-    height: 50px;
-    border: 1px solid black;
+/* Styles pour le canevas (plateau de jeu) */
+canvas {
+    border: 2px solid #2c3e50; /* Bordure noire autour du canevas */
+    border-radius: 8px; /* Coins arrondis */
+    background-color: #ffffff; /* Fond blanc pour le canevas */
+    width: 480px; /* Largeur du canevas */
+    height: 480px; /* Hauteur du canevas */
+}
+
+/* Ne pas ajouter de survol ou animation */
+canvas:hover {
+    cursor: default; /* Désactiver l'animation ou effet de survol */
+}
+
+/* Pour les petits écrans */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2rem; /* Taille du titre plus petite sur petits écrans */
+    }
+
+    canvas {
+        width: 90%; /* Largeur du canevas adaptative */
+        height: auto; /* Hauteur proportionnelle */
+    }
 }
