@@ -1,8 +1,9 @@
 from .board import Board 
+import chess
 
 class Game:
     def __init__(self):
-        self.board = Board()
+        self.board = chess.Board()
         self.current_turn = 'w'  # Par exemple, 'w' pour blanc, 'b' pour noir
 
     def start_game(self):
