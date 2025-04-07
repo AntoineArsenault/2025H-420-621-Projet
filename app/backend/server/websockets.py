@@ -10,4 +10,4 @@ def register_websocket_events(socketio):
     @socketio.on('get_board')
     def handle_get_board():
         print("Envoi du plateau...")
-        emit('update_board', game.get_board())  # Envoie l'état du plateau au frontend
+        emit('update_board', game.get_fen())  # Envoie l'état du plateau au frontend

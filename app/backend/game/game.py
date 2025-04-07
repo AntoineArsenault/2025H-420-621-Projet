@@ -1,4 +1,3 @@
-from .board import Board 
 import chess
 
 class Game:
@@ -11,4 +10,8 @@ class Game:
         pass
     
     def get_board(self):
-        return self.board.board  # Retourne l'état actuel du plateau
+        return self.board  # Retourne l'état actuel du plateau
+    
+    def get_fen(self):
+        return self.board.fen()
+    
