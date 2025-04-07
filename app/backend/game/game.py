@@ -15,3 +15,10 @@ class Game:
     def get_fen(self):
         return self.board.fen()
     
+    def make_move(self, from_square, to_square):
+        """Tente de faire un mouvement."""
+        move = chess.Move(from_square, to_square)
+        if move in self.board.legal_moves:
+            self.board.push(move)  # Appliquer le mouvement
+            return True
+        return False

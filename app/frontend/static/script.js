@@ -18,7 +18,7 @@ function preloadPieceImages() {
     });
 }
 
-// === Convertit FEN -> tableau 2D compatible drawBoard ===
+// === Convertir FEN -> tableau 2D compatible drawBoard ===
 function parseFEN(fen) {
     const rows = fen.split(" ")[0].split("/");
     const board = [];
@@ -70,7 +70,6 @@ function drawBoard(board) {
     }
 }
 
-
 // === Socket.IO ===
 const socket = io.connect("http://127.0.0.1:5000");
 
@@ -108,6 +107,18 @@ canvas.addEventListener('click', function(event) {
         // Réinitialiser la sélection
         selectedPiece = null;
     }
+});
+
+// === Réception des réponses du serveur ===
+socket.on('illegal_move', (data) => {
+    // Afficher un message d'erreur si le mouvement est invalide
+    alert(data.message);
+});
+
+socket.on('board_update', (fen) => {
+    // Mettre à jour le plateau si le mouvement est valide
+    const board = parseFEN(fen);
+    drawBoard(board);
 });
 
 // === Appeler la fonction de préchargement ===
