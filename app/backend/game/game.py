@@ -40,3 +40,13 @@ class Game:
             return "Partie nulle (variant)"
         else:
             return None  # La partie n'est pas encore terminée
+        
+    def get_legal_moves(self, row, col):
+        square = chess.square(col, 7 - row)  # Inverser ligne pour correspondre au frontend
+        moves = []
+        for move in self.board.legal_moves:
+            if move.from_square == square:
+                to_row = 7 - chess.square_rank(move.to_square)
+                to_col = chess.square_file(move.to_square)
+                moves.append({"row": to_row, "col": to_col})
+        return moves

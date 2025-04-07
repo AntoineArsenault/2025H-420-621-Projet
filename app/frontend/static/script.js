@@ -5,6 +5,19 @@ const tileSize = 60;
 const pieceImages = {};  // Doit être déclaré globalement
 let selectedPiece = null; // Pour stocker la pièce sélectionnée
 let boardState = []; // Pour stocker l'état du plateau
+let possibleMoves = []; // Pour stocker les mouvements possibles
+
+// === Ajuster la taille du canvas ===
+function highlightPossibleMoves() {
+    possibleMoves.forEach(move => {
+        const x = move.col * tileSize;
+        const y = move.row * tileSize;
+        ctx.fillStyle = "rgba(255, 255, 0, 0.5)";  // Jaune semi-transparent
+        ctx.beginPath();
+        ctx.arc(x + tileSize / 2, y + tileSize / 2, tileSize / 6, 0, 2 * Math.PI);
+        ctx.fill();
+    });
+}
 
 // === Précharger les images des pièces ===
 function preloadPieceImages() {
@@ -68,6 +81,8 @@ function drawBoard(board) {
             }
         }
     }
+    // Surligner les coups possibles après avoir dessiné
+    highlightPossibleMoves();
 }
 
 // === Socket.IO ===
@@ -113,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (piece) {
                 selectedPiece = { row, col };  // Enregistrer la case de la pièce sélectionnée
                 console.log("Pièce sélectionnée : ", piece, " à la position : ", row, col);
+                socket.emit('get_legal_moves', selectedPiece);  // Demande au backend
             }
         } else {
             // Deuxième clic : Déplacer la pièce
@@ -124,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Réinitialiser la sélection
             selectedPiece = null;
+            possibleMoves = [];  // Réinitialiser les mouvements possibles
         }
     });
 
@@ -131,6 +148,11 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('illegal_move', (data) => {
         // Afficher un message d'erreur si le mouvement est invalide
         alert(data.message);
+    });
+
+    socket.on('legal_moves', (moves) => {
+        possibleMoves = moves;
+        drawBoard(boardState);  // Redessine pour afficher les highlights
     });
 
     socket.on('board_update', (fen) => {

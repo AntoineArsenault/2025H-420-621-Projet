@@ -47,3 +47,10 @@ def register_websocket_events(socketio):
     def handle_restart_game():
         game.start_game()  # Réinitialiser la partie
         emit('update_board', game.get_fen())  # Envoyer l'état initial du plateau
+
+    @socketio.on('get_legal_moves')
+    def handle_get_legal_moves(data):
+        row = data['row']
+        col = data['col']
+        legal_moves = game.get_legal_moves(row, col)
+        emit('legal_moves', legal_moves)
