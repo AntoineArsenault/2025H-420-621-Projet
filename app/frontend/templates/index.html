@@ -11,13 +11,15 @@
 
 <body>
     <div class="content">
+        <div class="button-container">
+            <button id="restartButton" style="display: none;">Recommencer la partie</button>
+        </div>
         <h1>Jeu d'échecs</h1>
         <canvas id="chessboard" width="480" height="480"></canvas>
     </div>
+    
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
-
-<button id="restartButton" style="display: none;">Recommencer la partie</button>
 
 </html>

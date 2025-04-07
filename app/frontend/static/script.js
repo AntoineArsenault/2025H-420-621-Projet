@@ -7,6 +7,11 @@ let selectedPiece = null; // Pour stocker la pièce sélectionnée
 let boardState = []; // Pour stocker l'état du plateau
 let possibleMoves = []; // Pour stocker les mouvements possibles
 
+function isSameColor(piece1, piece2) {
+    if (!piece1 || !piece2) return false;
+    return piece1.slice(-1) === piece2.slice(-1);  // 'pawn-b' vs 'rook-b'
+}
+
 // === Ajuster la taille du canvas ===
 function highlightPossibleMoves() {
     possibleMoves.forEach(move => {
@@ -121,28 +126,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const y = event.clientY - canvas.getBoundingClientRect().top;
         const col = Math.floor(x / tileSize);
         const row = Math.floor(y / tileSize);
-
+        const clickedPiece = boardState[row][col];
+    
         if (!selectedPiece) {
-            // Premier clic : Sélectionner une pièce
-            const piece = boardState[row][col];
-            if (piece) {
-                selectedPiece = { row, col };  // Enregistrer la case de la pièce sélectionnée
-                console.log("Pièce sélectionnée : ", piece, " à la position : ", row, col);
-                socket.emit('get_legal_moves', selectedPiece);  // Demande au backend
+            // Premier clic
+            if (clickedPiece) {
+                selectedPiece = { row, col };
+                socket.emit('get_legal_moves', selectedPiece);
             }
         } else {
-            // Deuxième clic : Déplacer la pièce
-            console.log("Déplacement de la pièce : ", boardState[selectedPiece.row][selectedPiece.col]);
-            console.log("Vers la case : ", row, col);
-
-            // Ici, nous allons envoyer l'information au serveur pour mettre à jour le plateau
-            socket.emit('move_piece', { from: selectedPiece, to: { row, col } });
-
-            // Réinitialiser la sélection
-            selectedPiece = null;
-            possibleMoves = [];  // Réinitialiser les mouvements possibles
+            const selectedPieceType = boardState[selectedPiece.row][selectedPiece.col];
+    
+            if (clickedPiece && isSameColor(clickedPiece, selectedPieceType)) {
+                // Changer de sélection au lieu de déplacer
+                selectedPiece = { row, col };
+                socket.emit('get_legal_moves', selectedPiece);
+            } else {
+                // Tentative de déplacement
+                socket.emit('move_piece', { from: selectedPiece, to: { row, col } });
+                selectedPiece = null;
+                possibleMoves = [];
+            }
         }
-    });
+    });    
 
     // === Réception des réponses du serveur ===
     socket.on('illegal_move', (data) => {
