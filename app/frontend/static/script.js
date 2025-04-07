@@ -55,7 +55,7 @@ function drawBoard(board) {
             const y = row * tileSize;
             const isWhite = (row + col) % 2 === 0;
             
-            ctx.fillStyle = isWhite ? "#eee" : "#666";
+            ctx.fillStyle = isWhite ? "#dcdcdc" : "#568496";
             ctx.fillRect(x, y, tileSize, tileSize);
 
             // Vérification si une pièce existe à cette position
@@ -73,58 +73,72 @@ function drawBoard(board) {
 // === Socket.IO ===
 const socket = io.connect("http://127.0.0.1:5000");
 
-socket.on('connect', () => {
-    socket.emit('get_board');
-});
+// Lorsque le DOM est complètement chargé
+document.addEventListener('DOMContentLoaded', () => {
+    // Écouter l'événement de fin de partie
+    socket.on('game_over', (data) => {
+        alert("La partie est terminée : " + data.reason);  // Afficher la raison de la fin de la partie
+        document.getElementById('restartButton').style.display = 'inline-block';  // Afficher le bouton de redémarrage
+    });
 
-socket.on('update_board', (fen) => {
-    const board = parseFEN(fen);
-    drawBoard(board);
-});
-
-// Écouter l'événement de fin de partie
-socket.on('game_over', (data) => {
-    alert("La partie est terminée : " + data.reason);  // Afficher la raison de la fin de la partie
-});
-
-// === Gestion des clics ===
-canvas.addEventListener('click', function(event) {
-    const x = event.clientX - canvas.getBoundingClientRect().left;
-    const y = event.clientY - canvas.getBoundingClientRect().top;
-    const col = Math.floor(x / tileSize);
-    const row = Math.floor(y / tileSize);
-
-    if (!selectedPiece) {
-        // Premier clic : Sélectionner une pièce
-        const piece = boardState[row][col];
-        if (piece) {
-            selectedPiece = { row, col };  // Enregistrer la case de la pièce sélectionnée
-            console.log("Pièce sélectionnée : ", piece, " à la position : ", row, col);
-        }
-    } else {
-        // Deuxième clic : Déplacer la pièce
-        console.log("Déplacement de la pièce : ", boardState[selectedPiece.row][selectedPiece.col]);
-        console.log("Vers la case : ", row, col);
-
-        // Ici, nous allons envoyer l'information au serveur pour mettre à jour le plateau
-        socket.emit('move_piece', { from: selectedPiece, to: { row, col } });
-
-        // Réinitialiser la sélection
-        selectedPiece = null;
+    // Ajouter un gestionnaire d'événements pour recommencer la partie
+    const restartButton = document.getElementById('restartButton');
+    if (restartButton) {
+        restartButton.addEventListener('click', () => {
+            socket.emit('restart_game');  // Envoyer un événement au backend pour recommencer la partie
+            restartButton.style.display = 'none';  // Masquer le bouton de redémarrage
+        });
     }
-});
 
-// === Réception des réponses du serveur ===
-socket.on('illegal_move', (data) => {
-    // Afficher un message d'erreur si le mouvement est invalide
-    alert(data.message);
-});
+    // === Autres codes de Socket.IO ===
+    socket.on('connect', () => {
+        socket.emit('get_board');
+    });
 
-socket.on('board_update', (fen) => {
-    // Mettre à jour le plateau si le mouvement est valide
-    const board = parseFEN(fen);
-    drawBoard(board);
-});
+    socket.on('update_board', (fen) => {
+        const board = parseFEN(fen);
+        drawBoard(board);
+    });
 
-// === Appeler la fonction de préchargement ===
-preloadPieceImages();
+    // === Gestion des clics ===
+    canvas.addEventListener('click', function(event) {
+        const x = event.clientX - canvas.getBoundingClientRect().left;
+        const y = event.clientY - canvas.getBoundingClientRect().top;
+        const col = Math.floor(x / tileSize);
+        const row = Math.floor(y / tileSize);
+
+        if (!selectedPiece) {
+            // Premier clic : Sélectionner une pièce
+            const piece = boardState[row][col];
+            if (piece) {
+                selectedPiece = { row, col };  // Enregistrer la case de la pièce sélectionnée
+                console.log("Pièce sélectionnée : ", piece, " à la position : ", row, col);
+            }
+        } else {
+            // Deuxième clic : Déplacer la pièce
+            console.log("Déplacement de la pièce : ", boardState[selectedPiece.row][selectedPiece.col]);
+            console.log("Vers la case : ", row, col);
+
+            // Ici, nous allons envoyer l'information au serveur pour mettre à jour le plateau
+            socket.emit('move_piece', { from: selectedPiece, to: { row, col } });
+
+            // Réinitialiser la sélection
+            selectedPiece = null;
+        }
+    });
+
+    // === Réception des réponses du serveur ===
+    socket.on('illegal_move', (data) => {
+        // Afficher un message d'erreur si le mouvement est invalide
+        alert(data.message);
+    });
+
+    socket.on('board_update', (fen) => {
+        // Mettre à jour le plateau si le mouvement est valide
+        const board = parseFEN(fen);
+        drawBoard(board);
+    });
+
+    // === Appeler la fonction de préchargement ===
+    preloadPieceImages();
+});

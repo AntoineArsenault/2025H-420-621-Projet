@@ -1,6 +1,7 @@
 from flask_socketio import emit
 from game.game import Game
-import chess
+import chess  # Assurez-vous d'importer chess
+
 game = Game()
 
 # Fonction d'enregistrement des événements
@@ -12,7 +13,7 @@ def register_websocket_events(socketio):
     def handle_get_board():
         print("Envoi du plateau...")
         emit('update_board', game.get_fen())  # Envoie l'état du plateau au frontend
-
+    
     # Lorsqu'un client effectue un mouvement
     @socketio.on('move_piece')
     def handle_move_piece(data):
@@ -40,5 +41,9 @@ def register_websocket_events(socketio):
         else:
             # Si le mouvement est invalide
             emit('illegal_move', {'message': 'Mouvement illégal!'})
-
-            
+    
+    # Lorsqu'un client veut recommencer la partie
+    @socketio.on('restart_game')
+    def handle_restart_game():
+        game.start_game()  # Réinitialiser la partie
+        emit('update_board', game.get_fen())  # Envoyer l'état initial du plateau

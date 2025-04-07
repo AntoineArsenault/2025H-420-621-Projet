@@ -7,7 +7,8 @@ class Game:
 
     def start_game(self):
         # Logique pour démarrer une nouvelle partie
-        pass
+        self.board = chess.Board()
+        self.current_turn = 'w'  # Réinitialiser le tour à 'w' (blanc)
     
     def get_board(self):
         return self.board  # Retourne l'état actuel du plateau
