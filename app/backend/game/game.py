@@ -22,3 +22,20 @@ class Game:
             self.board.push(move)  # Appliquer le mouvement
             return True
         return False
+    
+    def is_game_over(self):
+        # Vérifie si la partie est terminée et retourne la raison de la fin de la partie
+        if self.board.is_checkmate():
+            return "Échec et mat"
+        elif self.board.is_stalemate():
+            return "Pat"
+        elif self.board.is_insufficient_material():
+            return "Matériel insuffisant"
+        elif self.board.is_seventyfive_moves():
+            return "75 coups sans prise ni mouvement de pion"
+        elif self.board.is_fivefold_repetition():
+            return "Répetition quintuple"
+        elif self.board.is_variant_draw():
+            return "Partie nulle (variant)"
+        else:
+            return None  # La partie n'est pas encore terminée

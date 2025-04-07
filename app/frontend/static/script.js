@@ -82,6 +82,11 @@ socket.on('update_board', (fen) => {
     drawBoard(board);
 });
 
+// Écouter l'événement de fin de partie
+socket.on('game_over', (data) => {
+    alert("La partie est terminée : " + data.reason);  // Afficher la raison de la fin de la partie
+});
+
 // === Gestion des clics ===
 canvas.addEventListener('click', function(event) {
     const x = event.clientX - canvas.getBoundingClientRect().left;

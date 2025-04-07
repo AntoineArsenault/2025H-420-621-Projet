@@ -31,6 +31,14 @@ def register_websocket_events(socketio):
         if move in game.board.legal_moves:
             game.board.push(move)  # Appliquer le mouvement à l'échiquier
             emit('board_update', game.get_fen())  # Envoyer l'état mis à jour du plateau
+
+            # Vérifier si la partie est terminée
+            game_over_reason = game.is_game_over()
+            if game_over_reason:
+                emit('game_over', {'reason': game_over_reason})  # Envoyer l'événement game_over
+
         else:
             # Si le mouvement est invalide
             emit('illegal_move', {'message': 'Mouvement illégal!'})
+
+            
