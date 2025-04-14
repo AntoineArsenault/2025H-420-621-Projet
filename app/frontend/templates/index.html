@@ -20,11 +20,25 @@
 
         <!-- Bouton de redémarrage -->
         <div class="button-container">
-            <button id="restartButton" style="display: none;">Recommencer la partie</button>
+            <button id="restartButton">Recommencer la partie</button>
+            <div class="toggle-container">
+                <label class="switch">
+                    <input type="checkbox" id="toggleHelpSlider" checked>
+                    <span class="slider"></span>
+                </label>
+                <span id="toggleHelpLabel">Aide activée</span>
+            </div>
         </div>
 
         <h1>Jeu d'échecs</h1>
         <canvas id="chessboard" width="480" height="480"></canvas>
+        <div class="chat-container">
+            <div id="chatMessages"></div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Écrire un message...">
+                <button id="sendChatBtn">Envoyer</button>
+            </div>
+        </div>        
     </div>
 
     <!-- Socket.IO -->

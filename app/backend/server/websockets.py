@@ -77,3 +77,7 @@ def register_websocket_events(socketio):
             del players[sid]
             print(f"{nom} s'est déconnecté")
             send_players_info()  # mise à jour des noms
+
+    @socketio.on('chat_message')
+    def handle_chat_message(data):
+        emit('chat_message', data, broadcast=True)

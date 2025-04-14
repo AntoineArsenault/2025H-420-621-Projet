@@ -8,6 +8,7 @@ let possibleMoves = [];
 let myColor = null;
 let myName = "";
 let playersInfo = { w: null, b: null };
+let helpEnabled = true;
 
 // === Fonctions d'information à l'écran ===
 function updateGameInfo() {
@@ -38,6 +39,8 @@ function isSameColor(piece1, piece2) {
 }
 
 function highlightPossibleMoves() {
+    if (!helpEnabled) return; // ❗ Ne rien afficher si l'aide est désactivée
+
     possibleMoves.forEach(move => {
         const x = move.col * tileSize;
         const y = move.row * tileSize;
@@ -109,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('player_accepted', data => {
         myColor = data.couleur;
-        document.getElementById("restartButton").style.display = "none";
+        //document.getElementById("restartButton").style.display = "none";
         socket.emit('get_board');
     });
 
@@ -142,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('game_over', data => {
         alert("La partie est terminée : " + data.reason);
-        document.getElementById('restartButton').style.display = 'inline-block';
+        //document.getElementById('restartButton').style.display = 'inline-block';
     });
 
     socket.on('legal_moves', moves => {
@@ -151,9 +154,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('restartButton').addEventListener('click', () => {
-        socket.emit('restart_game');
-        document.getElementById('restartButton').style.display = 'none';
+        if (confirm("Voulez-vous vraiment recommencer la partie ?")) {
+            socket.emit('restart_game');
+        }
+    });  
+    
+    document.getElementById('toggleHelpSlider').addEventListener('change', (e) => {
+        helpEnabled = e.target.checked;
+    
+        const label = document.getElementById('toggleHelpLabel');
+        label.textContent = helpEnabled ? "Aide activée" : "Aide désactivée";
+    
+        drawBoard(boardState.board); // rafraîchir
     });
+
+    document.getElementById('sendChatBtn').addEventListener('click', () => {
+        const message = document.getElementById('chatInput').value.trim();
+        if (message) {
+            socket.emit('chat_message', { nom: myName, text: message });
+            document.getElementById('chatInput').value = '';
+        }
+    });
+    
+    socket.on('chat_message', data => {
+        const chatBox = document.getElementById('chatMessages');
+        const msg = document.createElement('div');
+        msg.innerHTML = `<strong>${data.nom} :</strong> ${data.text}`;
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight; // scroll auto
+    });    
 
     canvas.addEventListener('click', function(event) {
         const x = event.clientX - canvas.getBoundingClientRect().left;
