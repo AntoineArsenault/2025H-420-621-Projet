@@ -1,52 +1,48 @@
 from flask_socketio import emit
 from game.game import Game
-import chess  # Assurez-vous d'importer chess
+import chess
+from flask import request
 
 game = Game()
 
-# Fonction d'enregistrement des événements
+players = {}
+order = []
+
+def send_players_info():
+    emit('players_info', {
+        'w': next((p['nom'] for p in players.values() if p['couleur'] == 'w'), None),
+        'b': next((p['nom'] for p in players.values() if p['couleur'] == 'b'), None)
+    }, broadcast=True)
+
 def register_websocket_events(socketio):
-    """Enregistre les événements de WebSocket."""
-    
-    # Lorsqu'un client demande l'état du plateau
     @socketio.on('get_board')
     def handle_get_board():
         print("Envoi du plateau...")
-        emit('update_board', game.get_fen())  # Envoie l'état du plateau au frontend
-    
-    # Lorsqu'un client effectue un mouvement
+        emit('update_board', game.get_fen())
+
     @socketio.on('move_piece')
     def handle_move_piece(data):
         from_row = data['from']['row']
         from_col = data['from']['col']
         to_row = data['to']['row']
         to_col = data['to']['col']
-
-        # Convertir les coordonnées de la grille en notations FEN
-        from_square = chess.square(from_col, 7 - from_row)  # Inverser la ligne (7 - row)
+        from_square = chess.square(from_col, 7 - from_row)
         to_square = chess.square(to_col, 7 - to_row)
-
-        # Tenter de réaliser le mouvement
         move = chess.Move(from_square, to_square)
 
         if move in game.board.legal_moves:
-            game.board.push(move)  # Appliquer le mouvement à l'échiquier
-            emit('board_update', game.get_fen())  # Envoyer l'état mis à jour du plateau
-
-            # Vérifier si la partie est terminée
-            game_over_reason = game.is_game_over()
-            if game_over_reason:
-                emit('game_over', {'reason': game_over_reason})  # Envoyer l'événement game_over
-
+            game.board.push(move)
+            emit('board_update', game.get_fen(), broadcast=True)
+            reason = game.is_game_over()
+            if reason:
+                emit('game_over', {'reason': reason}, broadcast=True)
         else:
-            # Si le mouvement est invalide
             emit('illegal_move', {'message': 'Mouvement illégal!'})
-    
-    # Lorsqu'un client veut recommencer la partie
+
     @socketio.on('restart_game')
     def handle_restart_game():
-        game.start_game()  # Réinitialiser la partie
-        emit('update_board', game.get_fen())  # Envoyer l'état initial du plateau
+        game.start_game()
+        emit('update_board', game.get_fen(), broadcast=True)
 
     @socketio.on('get_legal_moves')
     def handle_get_legal_moves(data):
@@ -54,3 +50,30 @@ def register_websocket_events(socketio):
         col = data['col']
         legal_moves = game.get_legal_moves(row, col)
         emit('legal_moves', legal_moves)
+
+    @socketio.on('register_player')
+    def handle_register(data):
+        nom = data['nom']
+        sid = request.sid
+
+        if len(order) < 2:
+            couleur = 'w' if len(order) == 0 else 'b'
+            players[sid] = {"nom": nom, "couleur": couleur}
+            order.append(sid)
+            emit('player_accepted', {'nom': nom, 'couleur': couleur}, room=sid)
+            print(f"{nom} a rejoint comme joueur {couleur}")
+        else:
+            emit('spectator', {'message': "Vous êtes spectateur."}, room=sid)
+            print(f"{nom} a rejoint comme spectateur.")
+        
+        send_players_info()  # mise à jour des noms
+
+    @socketio.on('disconnect')
+    def handle_disconnect():
+        sid = request.sid
+        if sid in players:
+            nom = players[sid]['nom']
+            order.remove(sid)
+            del players[sid]
+            print(f"{nom} s'est déconnecté")
+            send_players_info()  # mise à jour des noms

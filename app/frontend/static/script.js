@@ -1,34 +1,56 @@
-// === Variables globales ===
 const canvas = document.getElementById("chessboard");
 const ctx = canvas.getContext("2d");
 const tileSize = 60;
-const pieceImages = {};  // Doit être déclaré globalement
-let selectedPiece = null; // Pour stocker la pièce sélectionnée
-let boardState = []; // Pour stocker l'état du plateau
-let possibleMoves = []; // Pour stocker les mouvements possibles
+const pieceImages = {};
+let selectedPiece = null;
+let boardState = { board: [], turn: "w" };
+let possibleMoves = [];
+let myColor = null;
+let myName = "";
+let playersInfo = { w: null, b: null };
+
+// === Fonctions d'information à l'écran ===
+function updateGameInfo() {
+    const playerNameDisplay = document.getElementById("playerName");
+    const playerColorDisplay = document.getElementById("playerColor");
+    const opponentNameDisplay = document.getElementById("opponentName");
+    const currentTurnDisplay = document.getElementById("currentTurn");
+
+    if (!myColor) {
+        playerNameDisplay.textContent = "Mode spectateur";
+        playerColorDisplay.textContent = "";
+        opponentNameDisplay.textContent = "";
+    } else {
+        playerNameDisplay.textContent = "Nom : " + myName;
+        playerColorDisplay.textContent = "Couleur : " + (myColor === "w" ? "Blanc" : "Noir");
+
+        const opponentColor = myColor === "w" ? "b" : "w";
+        const opponent = playersInfo[opponentColor];
+        opponentNameDisplay.textContent = "Adversaire : " + (opponent || "En attente...");
+    }
+
+    currentTurnDisplay.textContent = "Tour : " + (boardState.turn === "w" ? "Blanc" : "Noir");
+}
 
 function isSameColor(piece1, piece2) {
     if (!piece1 || !piece2) return false;
-    return piece1.slice(-1) === piece2.slice(-1);  // 'pawn-b' vs 'rook-b'
+    return piece1.slice(-1) === piece2.slice(-1);
 }
 
-// === Ajuster la taille du canvas ===
 function highlightPossibleMoves() {
     possibleMoves.forEach(move => {
         const x = move.col * tileSize;
         const y = move.row * tileSize;
-        ctx.fillStyle = "rgba(255, 255, 0, 0.5)";  // Jaune semi-transparent
+        ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
         ctx.beginPath();
         ctx.arc(x + tileSize / 2, y + tileSize / 2, tileSize / 6, 0, 2 * Math.PI);
         ctx.fill();
     });
 }
 
-// === Précharger les images des pièces ===
 function preloadPieceImages() {
     const pieces = ['king-b', 'queen-b', 'rook-b', 'knight-b', 'bishop-b', 'pawn-b',
                     'king-w', 'queen-w', 'rook-w', 'knight-w', 'bishop-w', 'pawn-w'];
-
     pieces.forEach(piece => {
         const img = new Image();
         img.src = `static/assets/${piece}.svg`;
@@ -36,16 +58,14 @@ function preloadPieceImages() {
     });
 }
 
-// === Convertir FEN -> tableau 2D compatible drawBoard ===
 function parseFEN(fen) {
-    const rows = fen.split(" ")[0].split("/");
+    const [placement, turn] = fen.split(" ");
+    const rows = placement.split("/");
     const board = [];
-
     const fenToImage = {
         p: "pawn-b", r: "rook-b", n: "knight-b", b: "bishop-b", q: "queen-b", k: "king-b",
         P: "pawn-w", R: "rook-w", N: "knight-w", B: "bishop-w", Q: "queen-w", K: "king-w"
     };
-
     for (let row of rows) {
         const boardRow = [];
         for (let char of row) {
@@ -59,114 +79,110 @@ function parseFEN(fen) {
         }
         board.push(boardRow);
     }
-
-    return board;
+    return { board, turn };
 }
 
-// === Dessiner le plateau et les pièces ===
 function drawBoard(board) {
-    boardState = board; // Mettre à jour l'état du plateau
-
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
             const x = col * tileSize;
             const y = row * tileSize;
             const isWhite = (row + col) % 2 === 0;
-            
             ctx.fillStyle = isWhite ? "#dcdcdc" : "#568496";
             ctx.fillRect(x, y, tileSize, tileSize);
-
-            // Vérification si une pièce existe à cette position
-            const piece = boardState[row] && boardState[row][col];
-            if (piece) {
-                const image = pieceImages[piece];
-                if (image) {
-                    ctx.drawImage(image, x, y, tileSize, tileSize);
-                }
+            const piece = board[row][col];
+            if (piece && pieceImages[piece]) {
+                ctx.drawImage(pieceImages[piece], x, y, tileSize, tileSize);
             }
         }
     }
-    // Surligner les coups possibles après avoir dessiné
     highlightPossibleMoves();
 }
 
-// === Socket.IO ===
 const socket = io.connect("http://127.0.0.1:5000");
 
-// Lorsque le DOM est complètement chargé
 document.addEventListener('DOMContentLoaded', () => {
-    // Écouter l'événement de fin de partie
-    socket.on('game_over', (data) => {
-        alert("La partie est terminée : " + data.reason);  // Afficher la raison de la fin de la partie
-        document.getElementById('restartButton').style.display = 'inline-block';  // Afficher le bouton de redémarrage
+    socket.on('connect', () => {
+        myName = prompt("Entrez votre nom :");
+        socket.emit('register_player', { nom: myName });
     });
 
-    // Ajouter un gestionnaire d'événements pour recommencer la partie
-    const restartButton = document.getElementById('restartButton');
-    if (restartButton) {
-        restartButton.addEventListener('click', () => {
-            socket.emit('restart_game');  // Envoyer un événement au backend pour recommencer la partie
-            restartButton.style.display = 'none';  // Masquer le bouton de redémarrage
-        });
-    }
-
-    // === Autres codes de Socket.IO ===
-    socket.on('connect', () => {
+    socket.on('player_accepted', data => {
+        myColor = data.couleur;
+        document.getElementById("restartButton").style.display = "none";
         socket.emit('get_board');
     });
 
-    socket.on('update_board', (fen) => {
-        const board = parseFEN(fen);
-        drawBoard(board);
+    socket.on('spectator', data => {
+        myColor = null;
+        myName = "Spectateur";
+        socket.emit('get_board');
     });
 
-    // === Gestion des clics ===
+    socket.on('players_info', data => {
+        playersInfo = data;
+        updateGameInfo();
+    });
+
+    socket.on('update_board', fen => {
+        boardState = parseFEN(fen);
+        updateGameInfo();
+        drawBoard(boardState.board);
+    });
+
+    socket.on('board_update', fen => {
+        boardState = parseFEN(fen);
+        updateGameInfo();
+        drawBoard(boardState.board);
+    });
+
+    socket.on('illegal_move', data => {
+        alert(data.message);
+    });
+
+    socket.on('game_over', data => {
+        alert("La partie est terminée : " + data.reason);
+        document.getElementById('restartButton').style.display = 'inline-block';
+    });
+
+    socket.on('legal_moves', moves => {
+        possibleMoves = moves;
+        drawBoard(boardState.board);
+    });
+
+    document.getElementById('restartButton').addEventListener('click', () => {
+        socket.emit('restart_game');
+        document.getElementById('restartButton').style.display = 'none';
+    });
+
     canvas.addEventListener('click', function(event) {
         const x = event.clientX - canvas.getBoundingClientRect().left;
         const y = event.clientY - canvas.getBoundingClientRect().top;
         const col = Math.floor(x / tileSize);
         const row = Math.floor(y / tileSize);
-        const clickedPiece = boardState[row][col];
-    
+        const clickedPiece = boardState.board[row][col];
+
         if (!selectedPiece) {
-            // Premier clic
             if (clickedPiece) {
                 selectedPiece = { row, col };
                 socket.emit('get_legal_moves', selectedPiece);
             }
         } else {
-            const selectedPieceType = boardState[selectedPiece.row][selectedPiece.col];
-    
+            const selectedPieceType = boardState.board[selectedPiece.row][selectedPiece.col];
             if (clickedPiece && isSameColor(clickedPiece, selectedPieceType)) {
-                // Changer de sélection au lieu de déplacer
                 selectedPiece = { row, col };
                 socket.emit('get_legal_moves', selectedPiece);
             } else {
-                // Tentative de déplacement
+                if (myColor !== boardState.turn) {
+                    alert("Ce n’est pas votre tour !");
+                    return;
+                }
                 socket.emit('move_piece', { from: selectedPiece, to: { row, col } });
                 selectedPiece = null;
                 possibleMoves = [];
             }
         }
-    });    
-
-    // === Réception des réponses du serveur ===
-    socket.on('illegal_move', (data) => {
-        // Afficher un message d'erreur si le mouvement est invalide
-        alert(data.message);
     });
 
-    socket.on('legal_moves', (moves) => {
-        possibleMoves = moves;
-        drawBoard(boardState);  // Redessine pour afficher les highlights
-    });
-
-    socket.on('board_update', (fen) => {
-        // Mettre à jour le plateau si le mouvement est valide
-        const board = parseFEN(fen);
-        drawBoard(board);
-    });
-
-    // === Appeler la fonction de préchargement ===
     preloadPieceImages();
 });

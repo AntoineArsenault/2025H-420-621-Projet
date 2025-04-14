@@ -64,3 +64,16 @@ canvas:hover {
 #restartButton:hover {
     background-color: #1a252f;
 }
+
+.info-container {
+    margin-bottom: 24px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #1f1f1f; /* Teinte plus douce mais lisible */
+    background-color: #dbdbdb; /* Léger fond gris pour faire ressortir */
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Ombre légère pour relief */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}

@@ -1,23 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jeu d'échecs</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 
 <body>
     <div class="content">
+        <!-- Informations du joueur -->
+        <div class="info-container">
+            <p id="playerName">Nom : </p>
+            <p id="playerColor">Couleur : </p>
+            <p id="opponentName">Adversaire : </p>
+            <p id="currentTurn">Tour : </p>
+        </div>
+
+        <!-- Bouton de redémarrage -->
         <div class="button-container">
             <button id="restartButton" style="display: none;">Recommencer la partie</button>
         </div>
+
         <h1>Jeu d'échecs</h1>
         <canvas id="chessboard" width="480" height="480"></canvas>
     </div>
-    
+
+    <!-- Socket.IO -->
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
