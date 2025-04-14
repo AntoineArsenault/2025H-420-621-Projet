@@ -9,19 +9,21 @@
 </head>
 
 <body>
-    <div class="content">
-        <!-- Informations du joueur -->
-        <div class="info-container">
-            <p id="playerName">Nom : </p>
-            <p id="playerColor">Couleur : </p>
-            <p id="opponentName">Adversaire : </p>
-            <p id="currentTurn">Tour : </p>
-        </div>
+    <div class="main-container">
+        <div class="content">
+            <!-- Section plateau -->
+            <div class="info-container">
+                <p id="playerName">Nom : </p>
+                <p id="playerColor">Couleur : </p>
+                <p id="opponentName">Adversaire : </p>
+                <p id="currentTurn">Tour : </p>
+            </div>
 
-        <!-- Bouton de redémarrage -->
-        <div class="button-container">
-            <button id="restartButton">Recommencer la partie</button>
-            <div class="toggle-container">
+            <h1>Jeu d'échecs</h1>
+            <canvas id="chessboard" width="480" height="480"></canvas>
+
+            <div class="button-container">
+                <button id="restartButton">Recommencer la partie</button>
                 <label class="switch">
                     <input type="checkbox" id="toggleHelpSlider" checked>
                     <span class="slider"></span>
@@ -30,18 +32,16 @@
             </div>
         </div>
 
-        <h1>Jeu d'échecs</h1>
-        <canvas id="chessboard" width="480" height="480"></canvas>
+        <!-- Chat à droite -->
         <div class="chat-container">
             <div id="chatMessages"></div>
             <div class="chat-input">
                 <input type="text" id="chatInput" placeholder="Écrire un message...">
                 <button id="sendChatBtn">Envoyer</button>
             </div>
-        </div>        
+        </div>
     </div>
 
-    <!-- Socket.IO -->
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
