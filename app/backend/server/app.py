@@ -1,4 +1,5 @@
 import os
+import socket
 from flask import Flask, render_template
 from game import Game
 from flask_socketio import SocketIO
@@ -24,4 +25,12 @@ from .websockets import register_websocket_events
 register_websocket_events(socketio)  # Passer l'objet socketio à la fonction
 
 if __name__ == "__main__":
+    # Obtenir l'adresse IP locale de la machine
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+
+    # Afficher l'URL d'accès pour d'autres appareils sur le même réseau
+    print("🚀 Serveur lancé en local !")
+    print(f"🌐 Adresse pour jouer sur un autre appareil : http://{local_ip}:5000\n")
+
     socketio.run(app, debug=True, host="0.0.0.0", port=5000)

@@ -102,12 +102,15 @@ function drawBoard(board) {
     highlightPossibleMoves();
 }
 
-const socket = io.connect("http://127.0.0.1:5000");
+const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
     socket.on('connect', () => {
-        myName = prompt("Entrez votre nom :");
+        // ❗ Affiche bien le prompt à la connexion
+        myName = prompt("Entrez votre nom :") || "Anonyme";
+
         socket.emit('register_player', { nom: myName });
+        console.log("Connexion socket établie ✅");
     });
 
     socket.on('player_accepted', data => {
