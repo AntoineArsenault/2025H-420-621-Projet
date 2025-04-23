@@ -36,6 +36,7 @@ def register_websocket_events(socketio):
         emit('update_board', game.get_fen())
 
     @socketio.on('move_piece')
+    @socketio.on('move_piece')
     def handle_move_piece(data):
         from_row = data['from']['row']
         from_col = data['from']['col']
@@ -59,19 +60,28 @@ def register_websocket_events(socketio):
         # Construire le coup (avec ou sans promotion)
         move = chess.Move(from_square, to_square, promotion=promotion_piece)
 
+        # Obtenir l'identité du joueur
+        joueur = players.get(request.sid)
+
+        # 🔒 Empêcher de jouer si ce n’est pas son tour (en multijoueur)
+        if joueur and not joueur.get("contre_ia"):  # Seulement si on n’est PAS en mode IA
+            if (joueur["couleur"] == "w" and not game.board.turn) or (joueur["couleur"] == "b" and game.board.turn):
+                emit('illegal_move', {'message': 'Ce n’est pas votre tour !'})
+                return
+
         if move in game.board.legal_moves:
             game.board.push(move)
-            emit('board_update', game.get_fen())
-            reason = game.is_game_over()
-            if reason:
-                emit('game_over', {'reason': reason})
+            socketio.emit('board_update', game.get_fen())
+
+            if game.is_game_over():
+                socketio.emit('game_over', {'reason': game.is_game_over()})
         else:
             emit('illegal_move', {'message': 'Mouvement illégal!'})
 
         # Si on est en mode IA, faire jouer l'IA après le coup du joueur
-        joueur = players.get(request.sid)
         if joueur and joueur.get("contre_ia"):
             jouer_coup_ia(socketio)
+
 
 
     @socketio.on('restart_game')
