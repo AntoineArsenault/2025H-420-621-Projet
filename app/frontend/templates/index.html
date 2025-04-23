@@ -44,6 +44,19 @@
 
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <div id="promotionModal" class="modal">
+        <div class="modal-content">
+            <h3>Choisir une promotion</h3>
+            <div class="promotion-options">
+                <button data-piece="q">♕ Dame</button>
+                <button data-piece="r">♖ Tour</button>
+                <button data-piece="b">♗ Fou</button>
+                <button data-piece="n">♘ Cavalier</button>
+            </div>
+        </div>
+    </div>
+    
 </body>
 
 </html>

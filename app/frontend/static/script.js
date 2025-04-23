@@ -9,6 +9,8 @@ let myColor = null;
 let myName = "";
 let playersInfo = { w: null, b: null };
 let helpEnabled = true;
+let contreIA = false; // ❗ Variable pour le mode contre IA
+let pendingPromotion = null; // ❗ Variable pour la promotion de pion
 
 // === Fonctions d'information à l'écran ===
 function updateGameInfo() {
@@ -107,9 +109,17 @@ const socket = io();
 document.addEventListener('DOMContentLoaded', () => {
     socket.on('connect', () => {
         // ❗ Affiche bien le prompt à la connexion
+        const mode = prompt("Mode de jeu ? (ecrire 'ia' pour jouer contre l’IA, sinon entrer pour multijoueur)").toLowerCase();
+        if (mode === "ia") {
+            contreIA = true;
+        }
+
         myName = prompt("Entrez votre nom :") || "Anonyme";
 
-        socket.emit('register_player', { nom: myName });
+        socket.emit('register_player', {
+            nom: myName,
+            mode: contreIA ? "ia" : "multi"
+        });
         console.log("Connexion socket établie ✅");
     });
 
@@ -209,11 +219,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert("Ce n’est pas votre tour !");
                     return;
                 }
-                socket.emit('move_piece', { from: selectedPiece, to: { row, col } });
+                // Vérifier si promotion possible (pion qui atteint dernière rangée)
+                const pieceType = boardState.board[selectedPiece.row][selectedPiece.col];
+                const isPawn = pieceType && pieceType.startsWith('pawn');
+                const isLastRow = (myColor === "w" && row === 0) || (myColor === "b" && row === 7);
+
+                if (isPawn && isLastRow) {
+                    // Ouvrir le menu de promotion
+                    pendingPromotion = { from: selectedPiece, to: { row, col } };
+                    document.getElementById("promotionModal").style.display = "flex";
+                } else {
+                    socket.emit('move_piece', { from: selectedPiece, to: { row, col } });
+                }
                 selectedPiece = null;
                 possibleMoves = [];
             }
         }
+    });
+
+    // Gestion de la promotion de pion
+    document.querySelectorAll(".promotion-options button").forEach(button => {
+        button.addEventListener("click", () => {
+            const promotion = button.getAttribute("data-piece");
+            if (pendingPromotion) {
+                socket.emit("move_piece", {
+                    from: pendingPromotion.from,
+                    to: pendingPromotion.to,
+                    promotion: promotion
+                });
+                pendingPromotion = null;
+                document.getElementById("promotionModal").style.display = "none";
+            }
+        });
     });
 
     preloadPieceImages();
