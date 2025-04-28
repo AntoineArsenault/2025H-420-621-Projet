@@ -8,10 +8,23 @@ Chaque semaine, des indications spécifiques seront fournies pour guider le dév
 ## Évaluation
 Lors de la 5e semaine du projet, chaque équipe devra présenter sa solution, en expliquant les choix de conception, en faisant une démonstration de l'application et en répondant aux questions du professeur.
 Chaque équipe présentera à tour de rôle leur projet, selon un ordre pré-établi.
-La grille d'évaluation du projet se trouve [ici](https://cmaisonneuveqcca-my.sharepoint.com/:x:/g/personal/eterriault_cmaisonneuve_qc_ca/EV6TFQNx_o1Ko-Jl604Wn28B9TnuOxS9cKd5_EG0wPLMjA?e=MM26cH).
+La grille d'évaluation du projet se trouve [ici](https://cmaisonneuveqcca-my.sharepoint.com/:x:/g/personal/eterriault_cmaisonneuve_qc_ca/EV6TFQNx_o1Ko-Jl604Wn28B9TnuOxS9cKd5_EG0wPLMjA?e=MM26cH) et l'horaire d'évaluation des équipes se trouve [ici](https://cmaisonneuveqcca-my.sharepoint.com/:x:/r/personal/eterriault_cmaisonneuve_qc_ca/Documents/H25/420-621-MA/Projet/horaire_evaluation.xlsx?d=wd4f2cd06f584428b8da11f8eb5b78e9c&csf=1&web=1&e=8rQqkd).
 
 Chaque membre de l'équipe se verra attribué la même note **à moins qu'un débalancement dans la contribution de chaque membre** soit porté à l'attention du professeur. Dans le cas échéant, un ajustement à la note se fera de façon individuelle.
 
+L'évaluation de chaque équipe prendra environ 15 min et se déroulera comme suit:
+1. **Démonstration de votre projet**
+   - Connexion du ou des joueur(s)
+   - Choix du mode (solo ou multijoueur)
+   - Connexion en tant que spectateur
+   - Déplacement des pièces, tour par tour (ou réponse de l'ordinateur si mode solo)
+   - Fin de partie
+   - Gestion des erreurs: mauvais coup, mauvais joueur qui joue
+
+2. **Présentation des fichiers, des choix de conception et de la structure du code**
+   
+3. **Questions du professeur sur l'implantation des fonctionnalités et la structure du code pour tester votre compréhension**
+   
 ---
 ## **Technologies utilisées**
 - **WebSockets** : Communication en temps réel entre les joueurs.
@@ -26,8 +39,8 @@ Chaque membre de l'équipe se verra attribué la même note **à moins qu'un dé
 ```bash
 cd app/backend  # Aller dans le dossier backend
 python -m venv .venv       # Créer un environnement virtuel
-source venv/bin/activate  # Activer sur macOS/Linux
-venv\Scripts\activate     # Activer sur Windows
+source .venv/bin/activate  # Activer sur macOS/Linux
+.venv\Scripts\activate     # Activer sur Windows
 ```
 
 2. Installez les dépendances :
