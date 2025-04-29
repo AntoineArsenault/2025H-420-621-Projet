@@ -248,6 +248,8 @@ function parseFEN(fen) {
 }
 
 function drawBoard(board) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Efface avant de redessiner
+
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
             const x = col * tileSize;
@@ -255,11 +257,30 @@ function drawBoard(board) {
             const isWhite = (row + col) % 2 === 0;
             ctx.fillStyle = isWhite ? "#dcdcdc" : "#568496";
             ctx.fillRect(x, y, tileSize, tileSize);
+
             const piece = board[row][col];
             if (piece && pieceImages[piece]) {
                 ctx.drawImage(pieceImages[piece], x, y, tileSize, tileSize);
             }
         }
     }
-    highlightPossibleMoves();
+
+    highlightPossibleMoves(); // Met après le fond
+
+    // === Ajout des lettres et chiffres ===
+    ctx.fillStyle = "#333"; // Couleur du texte
+    ctx.font = "bold 14px Arial";
+
+    // Lettres en haut
+    const letters = "ABCDEFGH";
+    for (let col = 0; col < 8; col++) {
+        const letter = letters[col];
+        ctx.fillText(letter, col * tileSize + tileSize / 2 - 5, 15); // En haut (15px du haut)
+    }
+
+    // Chiffres à gauche
+    for (let row = 0; row < 8; row++) {
+        const number = 8 - row; // 8 en haut, 1 en bas
+        ctx.fillText(number, 5, row * tileSize + tileSize / 2 + 5);
+    }
 }
