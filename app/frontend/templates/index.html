@@ -9,6 +9,21 @@
 </head>
 
 <body>
+    <!-- 🏡 Petit écran d'accueil par-dessus tout -->
+    <div id="welcomeScreen">
+        <h2>Bienvenue !</h2>
+        <input id="inputName" type="text" placeholder="Entrez votre nom" style="margin:10px; padding:10px;">
+        <div style="margin-top: 20px;">
+            <button id="playIA" style="padding:10px 20px; margin:5px;">Jouer contre IA</button>
+            <button id="playMulti" style="padding:10px 20px; margin:5px;">Multijoueur</button>
+        </div>
+        <select id="selectLevel" style="margin-top: 10px; padding: 8px;">
+            <option value="facile">Facile</option>
+            <option value="moyen" selected>Moyen</option>
+            <option value="difficile">Difficile</option>
+        </select>
+    </div>
+
     <div class="main-container">
         <div class="content">
             <!-- Section plateau -->

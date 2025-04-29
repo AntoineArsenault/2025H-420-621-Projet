@@ -1,25 +1,42 @@
 from flask_socketio import emit
 from game.game import Game
 import chess
+import chess.engine
 from flask import request
 import random
 import eventlet
+
+# Démarrer Stockfish
+engine = chess.engine.SimpleEngine.popen_uci("../engine/stockfish.exe")  # ← adapte le chemin selon où tu as mis Stockfish
 
 game = Game()
 
 players = {}
 order = []
 
+def make_ai_move(board, niveau="moyen"):
+    """Utilise Stockfish pour faire un coup selon la difficulté."""
+    if niveau == "facile":
+        limit = chess.engine.Limit(depth=4)  # rapide et peu profond
+    elif niveau == "difficile":
+        limit = chess.engine.Limit(depth=15)  # réflexion plus poussée
+    else:
+        limit = chess.engine.Limit(depth=8)  # niveau moyen par défaut
+
+    result = engine.play(board, limit)
+    return result.move
+
 def jouer_coup_ia(socketio):
     if game.board.turn == chess.BLACK:
-        eventlet.sleep(0.5)  # Pause pour simuler le temps de réflexion de l'IA
-        # IA simple : choisir un coup aléatoire parmi les coups légaux
-        legal_moves = list(game.board.legal_moves)
-        if legal_moves:
-            coup = random.choice(legal_moves)
-            game.board.push(coup)
-            socketio.emit('board_update', game.get_fen())
+        eventlet.sleep(0.5)
+        # 🧠 Récupérer le joueur humain
+        humain = next((p for sid, p in players.items() if p.get("contre_ia")), None)
+        niveau = humain.get("niveau_ia", "moyen") if humain else "moyen"
 
+        move = make_ai_move(game.board, niveau)
+        if move:
+            game.board.push(move)
+            socketio.emit('board_update', game.get_fen())
             if game.is_game_over():
                 socketio.emit('game_over', {'reason': game.is_game_over()})
 
@@ -101,10 +118,11 @@ def register_websocket_events(socketio):
         nom = data['nom']
         mode = data.get('mode', 'multi')
         sid = request.sid
+        niveau = data.get('niveau', 'moyen')
 
         if mode == "ia":
             # Mode IA : le joueur est blanc, l’IA est noire
-            players[sid] = {"nom": nom, "couleur": "w", "contre_ia": True}
+            players[sid] = {"nom": nom, "couleur": "w", "contre_ia": True, "niveau_ia": niveau}
             order.append(sid)
             players["ia"] = {"nom": "IA", "couleur": "b"}
             emit('player_accepted', {'nom': nom, 'couleur': 'w'}, room=sid)

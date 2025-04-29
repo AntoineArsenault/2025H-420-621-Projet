@@ -3,6 +3,8 @@ import socket
 from flask import Flask, render_template
 from game import Game
 from flask_socketio import SocketIO
+import atexit
+from .websockets import register_websocket_events, engine
 
 # Définir les chemins des dossiers
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))  # backend/server/
@@ -33,4 +35,11 @@ if __name__ == "__main__":
     print("🚀 Serveur lancé en local !")
     print(f"🌐 Adresse pour jouer sur un autre appareil : http://{local_ip}:5000\n")
 
+    # Arrêter le moteur Stockfish à la fermeture de l'application
+    @atexit.register
+    def shutdown_engine():
+        """ Arrêter le moteur Stockfish proprement. """
+        print("Arrêt du moteur Stockfish...")
+        engine.quit()
+        
     socketio.run(app, debug=True, host="0.0.0.0", port=5000)

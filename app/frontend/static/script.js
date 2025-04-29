@@ -9,10 +9,172 @@ let myColor = null;
 let myName = "";
 let playersInfo = { w: null, b: null };
 let helpEnabled = true;
-let contreIA = false; // ❗ Variable pour le mode contre IA
-let pendingPromotion = null; // ❗ Variable pour la promotion de pion
+let contreIA = false;
+let pendingPromotion = null;
 
-// === Fonctions d'information à l'écran ===
+const socket = io();
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    // 🏡 Gestion de l'écran d'accueil
+    document.getElementById("playIA").addEventListener("click", () => {
+        myName = document.getElementById("inputName").value.trim() || "Anonyme";
+        contreIA = true;
+        const niveau = document.getElementById("selectLevel").value;
+        lancerConnexion(niveau);
+    });
+
+    document.getElementById("playMulti").addEventListener("click", () => {
+        myName = document.getElementById("inputName").value.trim() || "Anonyme";
+        contreIA = false;
+        lancerConnexion();
+    });
+
+    function lancerConnexion(niveau = "moyen") {
+        document.getElementById("welcomeScreen").style.display = "none";
+        socket.emit("register_player", {
+            nom: myName,
+            mode: contreIA ? "ia" : "multi",
+            niveau: contreIA ? niveau : undefined
+        });
+    }
+
+    // 🚀 Réactions aux événements socket
+
+    socket.on('player_accepted', data => {
+        myColor = data.couleur;
+        socket.emit('get_board');
+    });
+
+    socket.on('spectator', data => {
+        myColor = null;
+        myName = "Spectateur";
+        socket.emit('get_board');
+    });
+
+    socket.on('players_info', data => {
+        playersInfo = data;
+        updateGameInfo();
+    });
+
+    socket.on('update_board', fen => {
+        boardState = parseFEN(fen);
+        updateGameInfo();
+        drawBoard(boardState.board);
+    });
+
+    socket.on('board_update', fen => {
+        boardState = parseFEN(fen);
+        updateGameInfo();
+        drawBoard(boardState.board);
+    });
+
+    socket.on('illegal_move', data => {
+        alert(data.message);
+    });
+
+    socket.on('game_over', data => {
+        alert("La partie est terminée : " + data.reason);
+    });
+
+    socket.on('legal_moves', moves => {
+        possibleMoves = moves;
+        drawBoard(boardState.board);
+    });
+
+    socket.on('chat_message', data => {
+        const chatBox = document.getElementById('chatMessages');
+        const msg = document.createElement('div');
+        msg.innerHTML = `<strong>${data.nom} :</strong> ${data.text}`;
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    // 🎮 Contrôles du jeu
+
+    document.getElementById('restartButton').addEventListener('click', () => {
+        if (confirm("Voulez-vous vraiment recommencer la partie ?")) {
+            socket.emit('restart_game');
+        }
+    });
+
+    document.getElementById('toggleHelpSlider').addEventListener('change', (e) => {
+        helpEnabled = e.target.checked;
+        const label = document.getElementById('toggleHelpLabel');
+        label.textContent = helpEnabled ? "Aide activée" : "Aide désactivée";
+        drawBoard(boardState.board);
+    });
+
+    document.getElementById('sendChatBtn').addEventListener('click', () => {
+        const message = document.getElementById('chatInput').value.trim();
+        if (message) {
+            socket.emit('chat_message', { nom: myName, text: message });
+            document.getElementById('chatInput').value = '';
+        }
+    });
+
+    // 🎯 Plateau d'échecs : gestion clics
+
+    canvas.addEventListener('click', function(event) {
+        const x = event.clientX - canvas.getBoundingClientRect().left;
+        const y = event.clientY - canvas.getBoundingClientRect().top;
+        const col = Math.floor(x / tileSize);
+        const row = Math.floor(y / tileSize);
+        const clickedPiece = boardState.board[row][col];
+
+        if (!selectedPiece) {
+            if (clickedPiece) {
+                selectedPiece = { row, col };
+                socket.emit('get_legal_moves', selectedPiece);
+            }
+        } else {
+            const selectedPieceType = boardState.board[selectedPiece.row][selectedPiece.col];
+            if (clickedPiece && isSameColor(clickedPiece, selectedPieceType)) {
+                selectedPiece = { row, col };
+                socket.emit('get_legal_moves', selectedPiece);
+            } else {
+                if (myColor !== boardState.turn) {
+                    alert("Ce n’est pas votre tour !");
+                    return;
+                }
+
+                const pieceType = boardState.board[selectedPiece.row][selectedPiece.col];
+                const isPawn = pieceType && pieceType.startsWith('pawn');
+                const isLastRow = (myColor === "w" && row === 0) || (myColor === "b" && row === 7);
+
+                if (isPawn && isLastRow) {
+                    pendingPromotion = { from: selectedPiece, to: { row, col } };
+                    document.getElementById("promotionModal").style.display = "flex";
+                } else {
+                    socket.emit('move_piece', { from: selectedPiece, to: { row, col } });
+                }
+
+                selectedPiece = null;
+                possibleMoves = [];
+            }
+        }
+    });
+
+    document.querySelectorAll(".promotion-options button").forEach(button => {
+        button.addEventListener("click", () => {
+            const promotion = button.getAttribute("data-piece");
+            if (pendingPromotion) {
+                socket.emit("move_piece", {
+                    from: pendingPromotion.from,
+                    to: pendingPromotion.to,
+                    promotion: promotion
+                });
+                pendingPromotion = null;
+                document.getElementById("promotionModal").style.display = "none";
+            }
+        });
+    });
+
+    preloadPieceImages();
+});
+
+// === Fonctions utilitaires ===
+
 function updateGameInfo() {
     const playerNameDisplay = document.getElementById("playerName");
     const playerColorDisplay = document.getElementById("playerColor");
@@ -26,7 +188,6 @@ function updateGameInfo() {
     } else {
         playerNameDisplay.textContent = "Nom : " + myName;
         playerColorDisplay.textContent = "Couleur : " + (myColor === "w" ? "Blanc" : "Noir");
-
         const opponentColor = myColor === "w" ? "b" : "w";
         const opponent = playersInfo[opponentColor];
         opponentNameDisplay.textContent = "Adversaire : " + (opponent || "En attente...");
@@ -41,8 +202,7 @@ function isSameColor(piece1, piece2) {
 }
 
 function highlightPossibleMoves() {
-    if (!helpEnabled) return; // ❗ Ne rien afficher si l'aide est désactivée
-
+    if (!helpEnabled) return;
     possibleMoves.forEach(move => {
         const x = move.col * tileSize;
         const y = move.row * tileSize;
@@ -103,155 +263,3 @@ function drawBoard(board) {
     }
     highlightPossibleMoves();
 }
-
-const socket = io();
-
-document.addEventListener('DOMContentLoaded', () => {
-    socket.on('connect', () => {
-        // ❗ Affiche bien le prompt à la connexion
-        const mode = prompt("Mode de jeu ? (ecrire 'ia' pour jouer contre l’IA, sinon entrer pour multijoueur)").toLowerCase();
-        if (mode === "ia") {
-            contreIA = true;
-        }
-
-        myName = prompt("Entrez votre nom :") || "Anonyme";
-
-        socket.emit('register_player', {
-            nom: myName,
-            mode: contreIA ? "ia" : "multi"
-        });
-        console.log("Connexion socket établie ✅");
-    });
-
-    socket.on('player_accepted', data => {
-        myColor = data.couleur;
-        //document.getElementById("restartButton").style.display = "none";
-        socket.emit('get_board');
-    });
-
-    socket.on('spectator', data => {
-        myColor = null;
-        myName = "Spectateur";
-        socket.emit('get_board');
-    });
-
-    socket.on('players_info', data => {
-        playersInfo = data;
-        updateGameInfo();
-    });
-
-    socket.on('update_board', fen => {
-        boardState = parseFEN(fen);
-        updateGameInfo();
-        drawBoard(boardState.board);
-    });
-
-    socket.on('board_update', fen => {
-        boardState = parseFEN(fen);
-        updateGameInfo();
-        drawBoard(boardState.board);
-    });
-
-    socket.on('illegal_move', data => {
-        alert(data.message);
-    });
-
-    socket.on('game_over', data => {
-        alert("La partie est terminée : " + data.reason);
-        //document.getElementById('restartButton').style.display = 'inline-block';
-    });
-
-    socket.on('legal_moves', moves => {
-        possibleMoves = moves;
-        drawBoard(boardState.board);
-    });
-
-    document.getElementById('restartButton').addEventListener('click', () => {
-        if (confirm("Voulez-vous vraiment recommencer la partie ?")) {
-            socket.emit('restart_game');
-        }
-    });  
-    
-    document.getElementById('toggleHelpSlider').addEventListener('change', (e) => {
-        helpEnabled = e.target.checked;
-    
-        const label = document.getElementById('toggleHelpLabel');
-        label.textContent = helpEnabled ? "Aide activée" : "Aide désactivée";
-    
-        drawBoard(boardState.board); // rafraîchir
-    });
-
-    document.getElementById('sendChatBtn').addEventListener('click', () => {
-        const message = document.getElementById('chatInput').value.trim();
-        if (message) {
-            socket.emit('chat_message', { nom: myName, text: message });
-            document.getElementById('chatInput').value = '';
-        }
-    });
-    
-    socket.on('chat_message', data => {
-        const chatBox = document.getElementById('chatMessages');
-        const msg = document.createElement('div');
-        msg.innerHTML = `<strong>${data.nom} :</strong> ${data.text}`;
-        chatBox.appendChild(msg);
-        chatBox.scrollTop = chatBox.scrollHeight; // scroll auto
-    });    
-
-    canvas.addEventListener('click', function(event) {
-        const x = event.clientX - canvas.getBoundingClientRect().left;
-        const y = event.clientY - canvas.getBoundingClientRect().top;
-        const col = Math.floor(x / tileSize);
-        const row = Math.floor(y / tileSize);
-        const clickedPiece = boardState.board[row][col];
-
-        if (!selectedPiece) {
-            if (clickedPiece) {
-                selectedPiece = { row, col };
-                socket.emit('get_legal_moves', selectedPiece);
-            }
-        } else {
-            const selectedPieceType = boardState.board[selectedPiece.row][selectedPiece.col];
-            if (clickedPiece && isSameColor(clickedPiece, selectedPieceType)) {
-                selectedPiece = { row, col };
-                socket.emit('get_legal_moves', selectedPiece);
-            } else {
-                if (myColor !== boardState.turn) {
-                    alert("Ce n’est pas votre tour !");
-                    return;
-                }
-                // Vérifier si promotion possible (pion qui atteint dernière rangée)
-                const pieceType = boardState.board[selectedPiece.row][selectedPiece.col];
-                const isPawn = pieceType && pieceType.startsWith('pawn');
-                const isLastRow = (myColor === "w" && row === 0) || (myColor === "b" && row === 7);
-
-                if (isPawn && isLastRow) {
-                    // Ouvrir le menu de promotion
-                    pendingPromotion = { from: selectedPiece, to: { row, col } };
-                    document.getElementById("promotionModal").style.display = "flex";
-                } else {
-                    socket.emit('move_piece', { from: selectedPiece, to: { row, col } });
-                }
-                selectedPiece = null;
-                possibleMoves = [];
-            }
-        }
-    });
-
-    // Gestion de la promotion de pion
-    document.querySelectorAll(".promotion-options button").forEach(button => {
-        button.addEventListener("click", () => {
-            const promotion = button.getAttribute("data-piece");
-            if (pendingPromotion) {
-                socket.emit("move_piece", {
-                    from: pendingPromotion.from,
-                    to: pendingPromotion.to,
-                    promotion: promotion
-                });
-                pendingPromotion = null;
-                document.getElementById("promotionModal").style.display = "none";
-            }
-        });
-    });
-
-    preloadPieceImages();
-});
