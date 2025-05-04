@@ -129,8 +129,9 @@ def register_websocket_events(socketio):
             send_players_info()
             print(f"{nom} joue contre l'IA.")
 
-        elif len(order) < 2:
-            couleur = 'w' if len(order) == 0 else 'b'
+        elif len([sid for sid in order if sid in players]) < 2:
+            used_colors = [p["couleur"] for p in players.values() if not p.get("contre_ia")]
+            couleur = 'w' if 'w' not in used_colors else 'b'
             players[sid] = {"nom": nom, "couleur": couleur, "contre_ia": False}
             order.append(sid)
             emit('player_accepted', {'nom': nom, 'couleur': couleur}, room=sid)
@@ -149,7 +150,21 @@ def register_websocket_events(socketio):
             order.remove(sid)
             del players[sid]
             print(f"{nom} s'est déconnecté")
-            send_players_info()  # mise à jour des noms
+        if "ia" in players:
+            del players["ia"]
+        send_players_info()  # mise à jour des noms
+
+    @socketio.on('leave_game')
+    def handle_leave_game():
+        sid = request.sid
+        if sid in players:
+            nom = players[sid]['nom']
+            print(f"{nom} a quitté la partie volontairement.")
+            order.remove(sid)
+            del players[sid]
+        if "ia" in players:
+            del players["ia"]
+        send_players_info()
 
     @socketio.on('chat_message')
     def handle_chat_message(data):

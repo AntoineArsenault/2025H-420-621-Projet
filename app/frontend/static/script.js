@@ -98,6 +98,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    document.getElementById("returnMenuButton").addEventListener("click", () => {
+        if (confirm("Voulez-vous vraiment quitter la partie et revenir au menu ?")) {
+            socket.emit('leave_game');
+            // Réinitialiser l'état du jeu si nécessaire
+            selectedPiece = null;
+            boardState = { board: [], turn: "w" };
+            myColor = null;
+            myName = "";
+            playersInfo = { w: null, b: null };
+    
+            // Affiche à nouveau l'écran d'accueil
+            document.getElementById("welcomeScreen").style.display = "flex";
+        }
+    });
+
     document.getElementById('toggleHelpSlider').addEventListener('change', (e) => {
         helpEnabled = e.target.checked;
         const label = document.getElementById('toggleHelpLabel');
