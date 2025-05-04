@@ -8,7 +8,7 @@ Chaque semaine, des indications spécifiques seront fournies pour guider le dév
 ## Évaluation
 Lors de la 5e semaine du projet, chaque équipe devra présenter sa solution, en expliquant les choix de conception, en faisant une démonstration de l'application et en répondant aux questions du professeur.
 Chaque équipe présentera à tour de rôle leur projet, selon un ordre pré-établi.
-La grille d'évaluation du projet se trouve [ici](https://cmaisonneuveqcca-my.sharepoint.com/:x:/g/personal/eterriault_cmaisonneuve_qc_ca/EV6TFQNx_o1Ko-Jl604Wn28B9TnuOxS9cKd5_EG0wPLMjA?e=MM26cH) et l'horaire d'évaluation des équipes se trouve [ici](https://cmaisonneuveqcca-my.sharepoint.com/:x:/r/personal/eterriault_cmaisonneuve_qc_ca/Documents/H25/420-621-MA/Projet/horaire_evaluation.xlsx?d=wd4f2cd06f584428b8da11f8eb5b78e9c&csf=1&web=1&e=8rQqkd).
+La grille d'évaluation du projet se trouve [ici](https://cmaisonneuveqcca-my.sharepoint.com/:x:/g/personal/eterriault_cmaisonneuve_qc_ca/EV6TFQNx_o1Ko-Jl604Wn28B9TnuOxS9cKd5_EG0wPLMjA?e=zBumxV) et l'horaire d'évaluation des équipes se trouve [ici](https://cmaisonneuveqcca-my.sharepoint.com/:x:/r/personal/eterriault_cmaisonneuve_qc_ca/Documents/H25/420-621-MA/Projet/horaire_evaluation.xlsx?d=wd4f2cd06f584428b8da11f8eb5b78e9c&csf=1&web=1&e=8rQqkd).
 
 Chaque membre de l'équipe se verra attribué la même note **à moins qu'un débalancement dans la contribution de chaque membre** soit porté à l'attention du professeur. Dans le cas échéant, un ajustement à la note se fera de façon individuelle.
 
