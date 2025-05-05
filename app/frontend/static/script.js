@@ -1,22 +1,23 @@
-const canvas = document.getElementById("chessboard");
+// === Variables globales ===
+const canvas = document.getElementById("chessboard");   // Récupère le canvas
 const ctx = canvas.getContext("2d");
-const tileSize = 60;
-const pieceImages = {};
-let selectedPiece = null;
-let boardState = { board: [], turn: "w" };
-let possibleMoves = [];
-let myColor = null;
-let myName = "";
-let playersInfo = { w: null, b: null };
-let helpEnabled = true;
-let contreIA = false;
-let pendingPromotion = null;
+const tileSize = 60;            // Taille d'une case en pixels
+const pieceImages = {};         // Dictionnaire pour stocker les images des pièces
+let selectedPiece = null;       // Pièce sélectionnée par le joueur
+let boardState = { board: [], turn: "w" };  // État du plateau
+let possibleMoves = [];         // Liste des mouvements possibles
+let myColor = null;             // Couleur du joueur (w ou b)
+let myName = "";                // Nom du joueur
+let playersInfo = { w: null, b: null }; // Informations sur les joueurs
+let helpEnabled = true;         // Aide activée par défaut
+let contreIA = false;           // Indique si le joueur joue contre l'IA
+let pendingPromotion = null;    // Promotion en attente (pour les pions)
 
-const socket = io();
+const socket = io();    // Connexion au serveur WebSocket
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 🏡 Gestion de l'écran d'accueil
+    // Gestion de l'écran d'accueil
     document.getElementById("playIA").addEventListener("click", () => {
         myName = document.getElementById("inputName").value.trim() || "Anonyme";
         contreIA = true;
@@ -27,11 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("playMulti").addEventListener("click", () => {
         myName = document.getElementById("inputName").value.trim() || "Anonyme";
         contreIA = false;
-        lancerConnexion();
+        lancerConnexion();  // Connexion multi-joueur
     });
 
     function lancerConnexion(niveau = "moyen") {
-        document.getElementById("welcomeScreen").style.display = "none";
+        document.getElementById("welcomeScreen").style.display = "none";    // Cacher l'écran d'accueil
         socket.emit("register_player", {
             nom: myName,
             mode: contreIA ? "ia" : "multi",
@@ -39,11 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🚀 Réactions aux événements socket
+    // Evénements WebSocket
 
     socket.on('player_accepted', data => {
-        myColor = data.couleur;
-        socket.emit('get_board');
+        myColor = data.couleur;     // Couleur du joueur (w ou b)
+        socket.emit('get_board');   // Demande l'état du plateau
     });
 
     socket.on('spectator', data => {
@@ -54,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('players_info', data => {
         playersInfo = data;
-        updateGameInfo();
+        updateGameInfo();     // Met à jour les informations sur les joueurs
     });
 
     socket.on('update_board', fen => {
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('legal_moves', moves => {
         possibleMoves = moves;
-        drawBoard(boardState.board);
+        drawBoard(boardState.board);    // Surdessine les mouvements possibles
     });
 
     socket.on('chat_message', data => {
@@ -90,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    // 🎮 Contrôles du jeu
+    // Contrôles du jeu
 
     document.getElementById('restartButton').addEventListener('click', () => {
         if (confirm("Voulez-vous vraiment recommencer la partie ?")) {
@@ -101,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("returnMenuButton").addEventListener("click", () => {
         if (confirm("Voulez-vous vraiment quitter la partie et revenir au menu ?")) {
             socket.emit('leave_game');
-            // Réinitialiser l'état du jeu si nécessaire
+            // Réinitialise les variables de jeu
             selectedPiece = null;
             boardState = { board: [], turn: "w" };
             myColor = null;
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 🎯 Plateau d'échecs : gestion clics
+    // Plateau d'échecs : gestion clics
 
     canvas.addEventListener('click', function(event) {
         const x = event.clientX - canvas.getBoundingClientRect().left;
@@ -180,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     promotion: promotion
                 });
                 pendingPromotion = null;
-                document.getElementById("promotionModal").style.display = "none";
+                document.getElementById("promotionModal").style.display = "none";   
             }
         });
     });

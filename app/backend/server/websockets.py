@@ -1,19 +1,23 @@
-from flask_socketio import emit
-from game.game import Game
-import chess
-import chess.engine
-from flask import request
-import random
-import eventlet
+#Importation des modules nécessaires
+from flask_socketio import emit 
+from game.game import Game      
+import chess                    
+import chess.engine             
+from flask import request       
+import random                   
+import eventlet                 
 
 # Démarrer Stockfish
 engine = chess.engine.SimpleEngine.popen_uci("../engine/stockfish.exe")  # ← adapte le chemin selon où tu as mis Stockfish
 
+# Création d'une instance de jeu
 game = Game()
 
+# Dictionnaire pour stocker les joueurs et l'ordre de jeu
 players = {}
 order = []
 
+# Fonction pour demander un coup à l'IA selon un niveau de difficulté
 def make_ai_move(board, niveau="moyen"):
     """Utilise Stockfish pour faire un coup selon la difficulté."""
     if niveau == "facile":
@@ -26,35 +30,40 @@ def make_ai_move(board, niveau="moyen"):
     result = engine.play(board, limit)
     return result.move
 
+# Fonction qui fait jouer automatiquement l'IA après le coup du joueur
 def jouer_coup_ia(socketio):
-    if game.board.turn == chess.BLACK:
-        eventlet.sleep(0.5)
-        # 🧠 Récupérer le joueur humain
+    if game.board.turn == chess.BLACK:  # IA joue toujours en noir
+        # Récupérer les info du joueur humain
         humain = next((p for sid, p in players.items() if p.get("contre_ia")), None)
         niveau = humain.get("niveau_ia", "moyen") if humain else "moyen"
 
+        # Demander un coup à l'IA
         move = make_ai_move(game.board, niveau)
         if move:
-            game.board.push(move)
+            game.board.push(move)   ## Appliquer le coup de l'IA
             socketio.emit('board_update', game.get_fen())
             if game.is_game_over():
                 socketio.emit('game_over', {'reason': game.is_game_over()})
 
+# Fonction pour envoyer les informations des joueurs aux clients
 def send_players_info():
     emit('players_info', {
         'w': next((p['nom'] for p in players.values() if p['couleur'] == 'w'), None),
         'b': next((p['nom'] for p in players.values() if p['couleur'] == 'b'), None)
     }, broadcast=True)
 
+# Fonction pour enregistrer les événements WebSocket
 def register_websocket_events(socketio):
     @socketio.on('get_board')
     def handle_get_board():
+        """Envoie l'état actuel du plateau au client."""
         print("Envoi du plateau...")
         emit('update_board', game.get_fen())
 
     @socketio.on('move_piece')
-    @socketio.on('move_piece')
     def handle_move_piece(data):
+        """Gère le mouvement d'une pièce sur le plateau."""
+        # Convertir les coordonnées (frontend vers backend)
         from_row = data['from']['row']
         from_col = data['from']['col']
         to_row = data['to']['row']
@@ -80,12 +89,13 @@ def register_websocket_events(socketio):
         # Obtenir l'identité du joueur
         joueur = players.get(request.sid)
 
-        # 🔒 Empêcher de jouer si ce n’est pas son tour (en multijoueur)
+        # Empêcher de jouer si ce n’est pas son tour (en multijoueur)
         if joueur and not joueur.get("contre_ia"):  # Seulement si on n’est PAS en mode IA
             if (joueur["couleur"] == "w" and not game.board.turn) or (joueur["couleur"] == "b" and game.board.turn):
                 emit('illegal_move', {'message': 'Ce n’est pas votre tour !'})
                 return
 
+        # Vérifier si le coup est légal
         if move in game.board.legal_moves:
             game.board.push(move)
             socketio.emit('board_update', game.get_fen())
@@ -100,14 +110,15 @@ def register_websocket_events(socketio):
             jouer_coup_ia(socketio)
 
 
-
     @socketio.on('restart_game')
     def handle_restart_game():
+        """Redémarre une nouvelle partie."""
         game.start_game()
         emit('update_board', game.get_fen(), broadcast=True)
 
     @socketio.on('get_legal_moves')
     def handle_get_legal_moves(data):
+        """Envoie les mouvements légaux possibles pour une pièce sélectionnée."""
         row = data['row']
         col = data['col']
         legal_moves = game.get_legal_moves(row, col)
@@ -115,6 +126,7 @@ def register_websocket_events(socketio):
 
     @socketio.on('register_player')
     def handle_register(data):
+        """Enregistre un joueur et gère les couleurs."""
         nom = data['nom']
         mode = data.get('mode', 'multi')
         sid = request.sid
@@ -130,6 +142,7 @@ def register_websocket_events(socketio):
             print(f"{nom} joue contre l'IA.")
 
         elif len([sid for sid in order if sid in players]) < 2:
+            # Mode multijoueur : attribuer la couleur disponible
             used_colors = [p["couleur"] for p in players.values() if not p.get("contre_ia")]
             couleur = 'w' if 'w' not in used_colors else 'b'
             players[sid] = {"nom": nom, "couleur": couleur, "contre_ia": False}
@@ -137,6 +150,7 @@ def register_websocket_events(socketio):
             emit('player_accepted', {'nom': nom, 'couleur': couleur}, room=sid)
             print(f"{nom} a rejoint comme joueur {couleur}")
         else:
+            # Plus de 2 joueurs : devient spectateur
             emit('spectator', {'message': "Vous êtes spectateur."}, room=sid)
             print(f"{nom} a rejoint comme spectateur.")
 
@@ -144,6 +158,7 @@ def register_websocket_events(socketio):
 
     @socketio.on('disconnect')
     def handle_disconnect():
+        """Gère la déconnexion d'un joueur (fermeture d'onglet ou perte de connexion)."""
         sid = request.sid
         if sid in players:
             nom = players[sid]['nom']
@@ -156,6 +171,7 @@ def register_websocket_events(socketio):
 
     @socketio.on('leave_game')
     def handle_leave_game():
+        """Gère le départ volontaire d'un joueur."""
         sid = request.sid
         if sid in players:
             nom = players[sid]['nom']
@@ -168,4 +184,5 @@ def register_websocket_events(socketio):
 
     @socketio.on('chat_message')
     def handle_chat_message(data):
+        """Gère l'envoi de messages de chat."""
         emit('chat_message', data, broadcast=True)
