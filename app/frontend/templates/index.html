@@ -5,18 +5,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jeu d'échecs</title>
+
+    <!-- 📄 Lien vers la feuille de style CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
-    <!-- 🏡 Petit écran d'accueil par-dessus tout -->
+
+    <!-- 🏁 Écran d'accueil affiché au début -->
     <div id="welcomeScreen">
         <h2>Bienvenue !</h2>
+
+        <!-- Champ pour entrer le nom du joueur -->
         <input id="inputName" type="text" placeholder="Entrez votre nom" style="margin:10px; padding:10px;">
+
+        <!-- Choix du mode de jeu -->
         <div style="margin-top: 20px;">
             <button id="playIA" style="padding:10px 20px; margin:5px;">Jouer contre IA</button>
             <button id="playMulti" style="padding:10px 20px; margin:5px;">Multijoueur</button>
         </div>
+
+        <!-- Sélecteur du niveau de l’IA -->
         <select id="selectLevel" style="margin-top: 10px; padding: 8px;">
             <option value="facile">Facile</option>
             <option value="moyen" selected>Moyen</option>
@@ -24,9 +33,13 @@
         </select>
     </div>
 
+    <!-- 🎮 Conteneur principal : plateau + chat -->
     <div class="main-container">
+
+        <!-- 🎲 Zone du jeu (échiquier + infos + boutons) -->
         <div class="content">
-            <!-- Section plateau -->
+
+            <!-- Informations sur les joueurs et le tour -->
             <div class="info-container">
                 <p id="playerName">Nom : </p>
                 <p id="playerColor">Couleur : </p>
@@ -34,12 +47,16 @@
                 <p id="currentTurn">Tour : </p>
             </div>
 
+            <!-- Titre et plateau -->
             <h1>Jeu d'échecs</h1>
             <canvas id="chessboard" width="480" height="480"></canvas>
 
+            <!-- Boutons de contrôle sous le plateau -->
             <div class="button-container">
                 <button id="restartButton">Recommencer la partie</button>
                 <button id="returnMenuButton">Retour au menu</button>
+
+                <!-- Interrupteur visuel pour l’aide -->
                 <label class="switch">
                     <input type="checkbox" id="toggleHelpSlider" checked>
                     <span class="slider"></span>
@@ -48,9 +65,11 @@
             </div>
         </div>
 
-        <!-- Chat à droite -->
+        <!-- 💬 Zone de chat -->
         <div class="chat-container">
-            <div id="chatMessages"></div>
+            <div id="chatMessages"></div> <!-- Messages affichés ici -->
+
+            <!-- Zone de saisie du chat -->
             <div class="chat-input">
                 <input type="text" id="chatInput" placeholder="Écrire un message...">
                 <button id="sendChatBtn">Envoyer</button>
@@ -58,9 +77,13 @@
         </div>
     </div>
 
+    <!-- 🔌 Socket.IO (communication WebSocket) -->
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+
+    <!-- 📜 Script JavaScript principal -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
+    <!-- ♟️ Fenêtre modale pour promotion de pion -->
     <div id="promotionModal" class="modal">
         <div class="modal-content">
             <h3>Choisir une promotion</h3>
@@ -72,7 +95,7 @@
             </div>
         </div>
     </div>
-    
+
 </body>
 
 </html>

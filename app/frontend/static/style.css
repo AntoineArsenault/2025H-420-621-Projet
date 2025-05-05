@@ -1,57 +1,56 @@
-/* Styles globaux */
+/* === Styles globaux === */
 body {
-    font-family: 'Arial', sans-serif;
-    display: flex;
+    font-family: 'Arial', sans-serif; /* Police moderne et lisible */
+    display: flex;                    /* Centrage horizontal/vertical */
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin: 0;
-    background-color: #f0f0f0; /* Fond neutre et moderne */
-    color: #333; /* Texte sombre pour une bonne lisibilité */
+    background-color: #f0f0f0;       /* Fond gris clair */
+    color: #333;                     /* Texte foncé */
     box-sizing: border-box;
 }
 
-/* Centrer le titre */
 h1 {
-    font-size: 2.5rem; /* Taille de police du titre */
-    color: #2c3e50; /* Couleur de texte foncé */
+    font-size: 2.5rem;
+    color: #2c3e50;
     text-align: center;
-    margin-bottom: 20px; /* Espacement sous le titre */
-    font-weight: bold; /* Texte en gras */
+    margin-bottom: 20px;
+    font-weight: bold;
 }
 
-/* Styles pour le canevas (plateau de jeu) */
+/* === Échiquier === */
 canvas {
-    border: 2px solid #2c3e50; /* Bordure noire autour du canevas */
-    border-radius: 8px; /* Coins arrondis */
-    background-color: #ffffff; /* Fond blanc pour le canevas */
-    width: 480px; /* Largeur du canevas */
-    height: 480px; /* Hauteur du canevas */
+    border: 2px solid #2c3e50;
+    border-radius: 8px;
+    background-color: #ffffff;
+    width: 480px;
+    height: 480px;
 }
 
-/* Ne pas ajouter de survol ou animation */
 canvas:hover {
-    cursor: default; /* Désactiver l'animation ou effet de survol */
+    cursor: default;
 }
 
-/* Pour les petits écrans */
+/* === Responsive pour petits écrans === */
 @media (max-width: 768px) {
     h1 {
-        font-size: 2rem; /* Taille du titre plus petite sur petits écrans */
+        font-size: 2rem;
     }
 
     canvas {
-        width: 90%; /* Largeur du canevas adaptative */
-        height: auto; /* Hauteur proportionnelle */
+        width: 90%;
+        height: auto;
     }
 }
 
+/* === Boutons principaux === */
 .button-container {
     margin-top: 20px;
     text-align: center;
 }
 
-#restartButton {
+#restartButton, #returnMenuButton {
     padding: 10px 20px;
     font-size: 1rem;
     background-color: #2c3e50;
@@ -61,38 +60,26 @@ canvas:hover {
     cursor: pointer;
 }
 
-#restartButton:hover {
-    background-color: #1a252f;
-}
-
-#returnMenuButton {
-    padding: 10px 20px;
-    font-size: 1rem;
-    background-color: #2c3e50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
+#restartButton:hover,
 #returnMenuButton:hover {
     background-color: #1a252f;
 }
 
-
+/* === Informations joueur === */
 .info-container {
     margin-bottom: 24px;
     text-align: center;
     font-size: 1.2rem;
     font-weight: 500;
-    color: #1f1f1f; /* Teinte plus douce mais lisible */
-    background-color: #dbdbdb; /* Léger fond gris pour faire ressortir */
+    color: #1f1f1f;
+    background-color: #dbdbdb;
     padding: 16px 24px;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Ombre légère pour relief */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* === Toggle aide activée === */
 .toggle-container {
     display: flex;
     align-items: center;
@@ -101,7 +88,6 @@ canvas:hover {
     margin-top: 20px;
 }
 
-/* Slider switch */
 .switch {
     position: relative;
     display: inline-block;
@@ -144,13 +130,12 @@ input:checked + .slider:before {
     transform: translateX(22px);
 }
 
-/* Texte du toggle */
 #toggleHelpLabel {
     font-size: 1rem;
     color: #2c3e50;
 }
 
-/* Conteneur horizontal : plateau + chat */
+/* === Mise en page : plateau + chat === */
 .main-container {
     display: flex;
     justify-content: center;
@@ -159,7 +144,6 @@ input:checked + .slider:before {
     padding: 40px;
 }
 
-/* Plateau */
 .content {
     background-color: #ffffff;
     padding: 24px;
@@ -168,7 +152,7 @@ input:checked + .slider:before {
     width: 520px;
 }
 
-/* Chat à droite */
+/* === Zone de chat === */
 .chat-container {
     width: 300px;
     height: 620px;
@@ -217,7 +201,7 @@ input:checked + .slider:before {
     background-color: #0051cb;
 }
 
-/* Responsive (chat passe en dessous) */
+/* === Responsive layout mobile === */
 @media (max-width: 960px) {
     .main-container {
         flex-direction: column;
@@ -231,6 +215,7 @@ input:checked + .slider:before {
     }
 }
 
+/* === Fenêtre modale (promotion) === */
 .modal {
     display: none;
     position: fixed;
@@ -263,7 +248,7 @@ input:checked + .slider:before {
     background-color: #dcdcdc;
 }
 
-/* Ecran d'accueil (welcomeScreen) */
+/* === Écran d’accueil === */
 #welcomeScreen {
     position: fixed;
     top: 0; left: 0;
@@ -313,7 +298,7 @@ input:checked + .slider:before {
     background-color: #0051cb;
 }
 
-/* Animation d'entrée de l'écran d'accueil */
+/* === Animation écran d’accueil === */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }

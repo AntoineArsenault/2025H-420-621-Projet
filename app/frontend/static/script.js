@@ -1,38 +1,39 @@
 // === Variables globales ===
-const canvas = document.getElementById("chessboard");   // Récupère le canvas
-const ctx = canvas.getContext("2d");
-const tileSize = 60;            // Taille d'une case en pixels
-const pieceImages = {};         // Dictionnaire pour stocker les images des pièces
-let selectedPiece = null;       // Pièce sélectionnée par le joueur
-let boardState = { board: [], turn: "w" };  // État du plateau
-let possibleMoves = [];         // Liste des mouvements possibles
-let myColor = null;             // Couleur du joueur (w ou b)
-let myName = "";                // Nom du joueur
-let playersInfo = { w: null, b: null }; // Informations sur les joueurs
-let helpEnabled = true;         // Aide activée par défaut
-let contreIA = false;           // Indique si le joueur joue contre l'IA
-let pendingPromotion = null;    // Promotion en attente (pour les pions)
+const canvas = document.getElementById("chessboard");   // Récupère le canvas HTML pour l'échiquier
+const ctx = canvas.getContext("2d");                    // Contexte de dessin 2D pour le canvas
+const tileSize = 60;                                    // Taille d'une case en pixels
+const pieceImages = {};                                 // Dictionnaire pour stocker les images des pièces
+let selectedPiece = null;                               // Pièce sélectionnée par le joueur (ligne/colonne)
+let boardState = { board: [], turn: "w" };              // État actuel du plateau et tour du joueur
+let possibleMoves = [];                                 // Liste des mouvements possibles à afficher
+let myColor = null;                                     // Couleur du joueur ("w" ou "b")
+let myName = "";                                        // Nom du joueur
+let playersInfo = { w: null, b: null };                 // Informations sur les joueurs blancs et noirs
+let helpEnabled = true;                                 // Aide visuelle activée (cercles jaunes)
+let contreIA = false;                                   // Indique si le joueur affronte l'IA
+let pendingPromotion = null;                            // Promotion en attente (quand un pion atteint la fin)
 
-const socket = io();    // Connexion au serveur WebSocket
+const socket = io();                                    // Connexion WebSocket au serveur
 
+// === Code qui s'exécute une fois le document HTML chargé ===
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Gestion de l'écran d'accueil
+    // === Écran d'accueil ===
     document.getElementById("playIA").addEventListener("click", () => {
         myName = document.getElementById("inputName").value.trim() || "Anonyme";
         contreIA = true;
         const niveau = document.getElementById("selectLevel").value;
-        lancerConnexion(niveau);
+        lancerConnexion(niveau); // Connexion en mode IA
     });
 
     document.getElementById("playMulti").addEventListener("click", () => {
         myName = document.getElementById("inputName").value.trim() || "Anonyme";
         contreIA = false;
-        lancerConnexion();  // Connexion multi-joueur
+        lancerConnexion(); // Connexion multijoueur
     });
 
     function lancerConnexion(niveau = "moyen") {
-        document.getElementById("welcomeScreen").style.display = "none";    // Cacher l'écran d'accueil
+        document.getElementById("welcomeScreen").style.display = "none"; // Cache l'écran d'accueil
         socket.emit("register_player", {
             nom: myName,
             mode: contreIA ? "ia" : "multi",
@@ -40,11 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Evénements WebSocket
-
+    // === Réception des événements WebSocket du serveur ===
     socket.on('player_accepted', data => {
-        myColor = data.couleur;     // Couleur du joueur (w ou b)
-        socket.emit('get_board');   // Demande l'état du plateau
+        myColor = data.couleur;
+        socket.emit('get_board'); // Demande l’état du plateau
     });
 
     socket.on('spectator', data => {
@@ -55,13 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('players_info', data => {
         playersInfo = data;
-        updateGameInfo();     // Met à jour les informations sur les joueurs
+        updateGameInfo(); // Met à jour les infos des joueurs
     });
 
     socket.on('update_board', fen => {
-        boardState = parseFEN(fen);
-        updateGameInfo();
-        drawBoard(boardState.board);
+        boardState = parseFEN(fen);          // Met à jour l'état du jeu (FEN → matrice)
+        updateGameInfo();                    // Met à jour les infos d'affichage
+        drawBoard(boardState.board);        // Redessine l’échiquier
     });
 
     socket.on('board_update', fen => {
@@ -71,16 +71,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('illegal_move', data => {
-        alert(data.message);
+        alert(data.message); // Message d'erreur en cas de coup illégal
     });
 
     socket.on('game_over', data => {
-        alert("La partie est terminée : " + data.reason);
+        alert("La partie est terminée : " + data.reason); // Message de fin de partie
     });
 
     socket.on('legal_moves', moves => {
         possibleMoves = moves;
-        drawBoard(boardState.board);    // Surdessine les mouvements possibles
+        drawBoard(boardState.board); // Affiche les coups légaux
     });
 
     socket.on('chat_message', data => {
@@ -91,8 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    // Contrôles du jeu
-
+    // === Contrôles boutons ===
     document.getElementById('restartButton').addEventListener('click', () => {
         if (confirm("Voulez-vous vraiment recommencer la partie ?")) {
             socket.emit('restart_game');
@@ -102,14 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("returnMenuButton").addEventListener("click", () => {
         if (confirm("Voulez-vous vraiment quitter la partie et revenir au menu ?")) {
             socket.emit('leave_game');
-            // Réinitialise les variables de jeu
+
+            // Réinitialise les données de jeu
             selectedPiece = null;
             boardState = { board: [], turn: "w" };
             myColor = null;
             myName = "";
             playersInfo = { w: null, b: null };
-    
-            // Affiche à nouveau l'écran d'accueil
+
             document.getElementById("welcomeScreen").style.display = "flex";
         }
     });
@@ -129,8 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Plateau d'échecs : gestion clics
-
+    // === Clic sur l’échiquier ===
     canvas.addEventListener('click', function(event) {
         const x = event.clientX - canvas.getBoundingClientRect().left;
         const y = event.clientY - canvas.getBoundingClientRect().top;
@@ -171,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // === Choix de la pièce pour promotion ===
     document.querySelectorAll(".promotion-options button").forEach(button => {
         button.addEventListener("click", () => {
             const promotion = button.getAttribute("data-piece");
@@ -186,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    preloadPieceImages();
+    preloadPieceImages(); // Charge les images des pièces à l’avance
 });
 
 // === Fonctions utilitaires ===
@@ -214,7 +213,7 @@ function updateGameInfo() {
 
 function isSameColor(piece1, piece2) {
     if (!piece1 || !piece2) return false;
-    return piece1.slice(-1) === piece2.slice(-1);
+    return piece1.slice(-1) === piece2.slice(-1); // Compare les suffixes "w" ou "b"
 }
 
 function highlightPossibleMoves() {
@@ -252,10 +251,10 @@ function parseFEN(fen) {
         for (let char of row) {
             if (!isNaN(char)) {
                 for (let i = 0; i < parseInt(char); i++) {
-                    boardRow.push(null);
+                    boardRow.push(null); // case vide
                 }
             } else {
-                boardRow.push(fenToImage[char]);
+                boardRow.push(fenToImage[char]); // case avec une pièce
             }
         }
         board.push(boardRow);
@@ -264,7 +263,7 @@ function parseFEN(fen) {
 }
 
 function drawBoard(board) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Efface avant de redessiner
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Nettoie le plateau
 
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
@@ -281,22 +280,20 @@ function drawBoard(board) {
         }
     }
 
-    highlightPossibleMoves(); // Met après le fond
+    highlightPossibleMoves(); // Affiche les coups légaux (cercles jaunes)
 
-    // === Ajout des lettres et chiffres ===
-    ctx.fillStyle = "#333"; // Couleur du texte
+    // Lettres A-H en haut
+    ctx.fillStyle = "#333";
     ctx.font = "bold 14px Arial";
-
-    // Lettres en haut
     const letters = "ABCDEFGH";
     for (let col = 0; col < 8; col++) {
         const letter = letters[col];
-        ctx.fillText(letter, col * tileSize + tileSize / 2 - 5, 15); // En haut (15px du haut)
+        ctx.fillText(letter, col * tileSize + tileSize / 2 - 5, 15);
     }
 
-    // Chiffres à gauche
+    // Chiffres 1-8 à gauche
     for (let row = 0; row < 8; row++) {
-        const number = 8 - row; // 8 en haut, 1 en bas
+        const number = 8 - row;
         ctx.fillText(number, 5, row * tileSize + tileSize / 2 + 5);
     }
 }
